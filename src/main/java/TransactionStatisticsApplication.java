@@ -37,6 +37,19 @@ public class TransactionStatisticsApplication {
         SpringApplication.run(TransactionStatisticsApplication.class, args);
     }
 
+    @PostMapping("/transactions")
+    public ResponseEntity<String> createTransaction(@RequestBody Transaction transaction){
+
+        LocalDateTime now = LocalDateTime.now();
+        //older than 60 sec
+        if(transaction.getTimestamp().isBefore(now.minusSeconds(60))){
+            return ResponseEntity.status(204).build();
+        } else {
+            transactions.add(transaction);
+            return ResponseEntity.status(201).build();
+        }
+    }
+
     @GetMapping("/statistics")
     public ResponseEntity<Statistics> getStatistics(){
         List<Transaction> filtered = new ArrayList<>();
