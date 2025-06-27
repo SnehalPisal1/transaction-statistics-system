@@ -15,9 +15,15 @@ This is a well-documented N26 interview challenge, often implemented in Java wit
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedDeque;
 
 @SpringBootApplication
@@ -30,6 +36,40 @@ public class TransactionStatisticsApplication {
 
         SpringApplication.run(TransactionStatisticsApplication.class, args);
     }
+
+    @GetMapping("/statistics")
+    public ResponseEntity<Statistics> getStatistics(){
+        List<Transaction> filtered = new ArrayList<>();
+
+        for(Transaction transaction: transactions){
+            // filtered tarnasction
+            LocalDateTime now = LocalDateTime.now();
+            //not older
+            if( !transaction.getTimestamp().isBefore(now.minusSeconds(60))){
+                filtered.add(transaction);
+            }
+        }
+
+        if( filtered.isEmpty()){
+            return ResponseEntity.status(200).body(new Statistics(0, 0, 0, 0,0));
+        }
+        //   sum, average, min, max, count
+        double sum=0;
+        double min = Integer.MAX_VALUE;
+        double max= Integer.MIN_VALUE;
+        for(Transaction transaction : filtered){
+            sum = sum + transaction.getAmount();
+            min =Math.min(min, transaction.getAmount());
+            max =Math.max(max, transaction.getAmount());
+        }
+
+        double avg = sum / filtered.size();
+
+        return ResponseEntity.status(200).body(new Statistics(sum, avg, min, max,filtered.size()));
+
+    }
+
+
 
     static class Statistics{
         private double sum;
